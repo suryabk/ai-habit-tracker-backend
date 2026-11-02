@@ -3,7 +3,7 @@ import User from "../models/User.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "30d",
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 };
 
@@ -30,6 +30,7 @@ export const register = async (req, res) => {
       password,
       avatar: name.charAt(0).toUpperCase(),
     });
+
     const token = generateToken(user._id);
     res.status(201).json({ user, token });
   } catch (error) {
@@ -47,9 +48,17 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
-    if (!user || !isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
     }
 
     const token = generateToken(user._id);
@@ -83,6 +92,7 @@ export const updateProfile = async (req, res) => {
     if (morningMotivation !== undefined) {
       user.morningMotivation = morningMotivation;
     }
+
     await user.save();
     res.status(200).json({ user });
   } catch (error) {
