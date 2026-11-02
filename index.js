@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.js";
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
+
+app.use("/auth", authRoutes);
 
 app.use(errorHandler);
 
