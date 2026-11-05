@@ -1,4 +1,5 @@
 import {
+  differenceInCalendarDays,
   eachDayOfInterval,
   endOfWeek,
   format,
@@ -7,7 +8,7 @@ import {
 } from "date-fns";
 
 export const toDateKey = (date) => {
-  return format(date, "dd-MM-yyyy");
+  return format(date, "yyyy-MM-dd");
 };
 
 export const todayKey = () => {
@@ -15,7 +16,7 @@ export const todayKey = () => {
 };
 
 export const toDateTimeKey = (date) => {
-  return format(date, "dd-MM-yyyy HH:mm:ss");
+  return format(date, "yyyy-MM-dd HH:mm:ss");
 };
 
 export const last90days = () => {
@@ -47,9 +48,12 @@ export const calcStreak = (sortedDateKeys) => {
   let cursor = new Date();
 
   if (!set.has(today) && !set.has(yesterday)) {
-    return (current = 0);
-  } else if (set.has(today)) {
-    cursor = subDays(cursor, 1);
+    current = 0;
+  } else {
+    if (!set.has(today)) {
+      cursor = subDays(cursor, 1);
+    }
+
     while (set.has(toDateKey(cursor))) {
       current += 1;
       cursor = subDays(cursor, 1);
@@ -65,14 +69,18 @@ export const calcStreak = (sortedDateKeys) => {
     if (prev) {
       const day = new Date(k);
       const prevDay = new Date(prev);
-      const diff = Math.round((day - prevDay) / (1000 * 60 * 60 * 24));
+      const diff = differenceInCalendarDays(day, prevDay);
       if (diff === 1) {
         run += 1;
       } else {
         run = 1;
       }
+    } else {
+      run = 1;
     }
-    if (run > longest) longest = run;
+    if (run > longest) {
+      longest = run;
+    }
     prev = k;
   }
 

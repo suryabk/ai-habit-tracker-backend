@@ -1,6 +1,11 @@
-import Habit from "../models/Habit";
-import HabitLog from "../models/HabitLog";
-import { todayKey } from "../utils/dateHelpers";
+import Habit from "../models/Habit.js";
+import HabitLog from "../models/HabitLog.js";
+import {
+  calcStreak,
+  last90days,
+  lastNDays,
+  todayKey,
+} from "../utils/dateHelpers.js";
 
 export const markComplete = async (req, res) => {
   try {
@@ -18,12 +23,9 @@ export const markComplete = async (req, res) => {
         completedDate,
       },
       { $setOnInsert: { userId: req.user._id, habitId, completedDate } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
 
-    if (habit.completedDates.includes(completedDate)) {
-      return res.status(400).json({ message: "Marked" });
-    }
     res.status(200).json({ data: log });
   } catch (error) {
     console.error(error);
@@ -81,16 +83,19 @@ export const getRange = async (req, res) => {
 
 export const getHeatmap = async (req, res) => {
   try {
-    const days = last90Days();
+    const days = last90days();
     const logs = await HabitLog.find({
       userId: req.user._id,
       completedDate: { $gte: days[0], $lte: days[days.length - 1] },
     });
 
     const counts = {};
-    for (const d of days) counts[d] = 0;
-    for (const l of logs)
+    for (const d of days) {
+      counts[d] = 0;
+    }
+    for (const l of logs) {
       counts[l.completedDate] = (counts[l.completedDate] || 0) + 1;
+    }
 
     const data = days.map((d) => ({ date: d, count: counts[d] || 0 }));
     res.status(200).json({ data, message: "Heatmap fetched successfully" });
@@ -178,7 +183,9 @@ export const getAllStats = async (req, res) => {
       };
     });
 
-    res.status(200).json({ data: perHabit, message: "All stats fetched" });
+    res
+      .status(200)
+      .json({ data: { perHabit, days }, message: "All stats fetched" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to get all stats" });
