@@ -115,7 +115,7 @@ export const archiveHabit = async (req, res) => {
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" });
     }
-    habit.isArchived = true;
+    habit.isArchived = !habit.isArchived;
     const updatedHabit = await habit.save();
     res
       .status(200)
